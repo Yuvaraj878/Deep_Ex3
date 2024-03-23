@@ -65,41 +65,35 @@ Use model.evaluate(X_test, y_test) to assess accuracy and other metrics.
 
 #### PREPROCESSING
 ```py
+from tensorflow import keras
+from tensorflow.keras import layers
 from tensorflow.keras.datasets import mnist
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D,MaxPooling2D,Dense,Flatten
-from tensorflow.keras.metrics import CategoricalCrossentropy
-from tensorflow.keras.preprocessing import image
 import tensorflow as tf
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import classification_report, confusion_matrix
+from tensorflow.keras import utils
+import pandas as pd
+from sklearn.metrics import classification_report,confusion_matrix
 ```
 #### DATA LOADING AND PREPROCESSING
 ```py
-(x_train,y_train),(x_test,y_test) = mnist.load_data()
-x_train.shape
-test = x_train[4]
-plt.imshow(test,cmap='gray')
-x_train.max()
-x_train.min()
-X_train = x_train/255.0
-X_test = x_test/255.0
-X_train.max(),X_train.min()
-X_test.max(),X_test.min()
+(X_train, y_train), (X_test, y_test) = mnist.load_data()
 X_train.shape
-y_train[0]
-from tensorflow.keras import utils
-y_train = utils.to_categorical(y_train, 10)
-y_test_scaled = utils.to_categorical(y_test, 10)
-y_train.shape
-img = X_train[23]
-plt.imshow(img)
-X_train = X_train.reshape(-1,28,28,1)
-X_test  = X_test.reshape(-1,28,28,1)
-type(y_train)
-X_train.shape
+X_test.shape
+single_image= X_train[5]
+single_image.shape
+plt.imshow(single_image,cmap='gray')
+X_train_scaled = X_train/255.0
+X_test_scaled = X_test/255.0
+X_train_scaled.min()
+X_train_scaled.max()
+y_train[5]
+y_train_onehot = utils.to_categorical(y_train,10)
+y_test_onehot = utils.to_categorical(y_test,10)
+single_image = X_train[500]
+plt.imshow(single_image,cmap='gray')
+y_train_onehot[500]
+X_train_scaled = X_train_scaled.reshape(-1,28,28,1)
+X_test_scaled = X_test_scaled.reshape(-1,28,28,1)
 ```
 #### MODEL ARCHITECTURE
 ```py
@@ -125,12 +119,11 @@ model.compile(
     loss ='categorical_crossentropy',
     metrics=['accuracy']
 )
-model.fit(
-    X_train,
-    y_train,
-    epochs=10,
-    validation_data=(X_test,y_test)
-)
+model.fit(X_train_scaled ,
+          y_train_onehot, epochs=5,
+          batch_size=64, 
+          validation_data=(X_test_scaled,y_test_onehot)
+        )
 metrics = pd.DataFrame(model.history.history)
 metrics.head()
 
@@ -139,33 +132,37 @@ plt.xlabel('Epoch')
 plt.ylabel('Metric')
 plt.show()
 
-pred = np.argmax(model.predict(X_test),axis=1)
-pred[0:10]
-y_test[0:10]
-print(type(y_test))
-print(type(pred))
-from sklearn.metrics import classification_report, confusion_matrix
-y_test = y_test.ravel()
-pred=pred.ravel()
+import numpy as np
+x_test_predictions = np.argmax(model.predict(X_test_scaled), axis=1)
 print("Name : YUVARAJ.S\nRegister Number : 212222240119\n")
-print(confusion_matrix(y_test,pred))
+print(confusion_matrix(y_test,x_test_predictions))
+print("Name : YUVARAJ.S\nRegister Number : 212222240119\n")
+print(classification_report(y_test,x_test_predictions))
+
 ```
 #### PREDICTION
 ```py
-from PIL import Image
-input_img_path = '7.jpg'
-input_img = Image.open(input_img_path).convert('L') 
-input_img = input_img.resize((28, 28))  
-input_img = np.array(input_img)  
-input_img = input_img.reshape(1, 28, 28, 1)  
-input_img = input_img.astype('float32') / 255.0  
-predicted_label = model.predict(input_img)
-predicted_digit = np.argmax(predicted_label)
+from tensorflow.keras.preprocessing import image
+import matplotlib.pyplot as plt
+
+img = image.load_img('4.png')
+img_tensor = tf.convert_to_tensor(np.asarray(img))
+img_28 = tf.image.resize(img_tensor, (28, 28))
+img_28_gray = tf.image.rgb_to_grayscale(img_28)
+img_28_gray_scaled = img_28_gray.numpy() / 255.0
 
 print("Name : YUVARAJ.S\nRegister Number : 212222240119\n")
+x_single_prediction = np.argmax(model.predict(img_28_gray_scaled.reshape(1, 28, 28, 1)), axis=1)
+print(x_single_prediction)
+plt.imshow(img_28_gray_scaled.reshape(28, 28), cmap='gray')
+plt.axis('off')
+plt.show()
+img_28_gray_inverted = 255.0 - img_28_gray
+img_28_gray_inverted_scaled = img_28_gray_inverted.numpy() / 255.0
 
-plt.imshow(input_img.reshape(28, 28), cmap='gray')
-plt.title(f"Predicted Digit: {predicted_digit}")
+x_single_prediction_inverted = np.argmax(model.predict(img_28_gray_inverted_scaled.reshape(1, 28, 28, 1)), axis=1)
+print(x_single_prediction_inverted)
+plt.imshow(img_28_gray_inverted_scaled.reshape(28, 28), cmap='gray')
 plt.axis('off')
 plt.show()
 
@@ -174,23 +171,23 @@ plt.show()
 
 ### Training Loss, Validation Loss Vs Iteration Plot
 
-![download](./img/1.png)
+![download](./img/n1.png)
 
 ### Classification Report
 
-![image](./img/2.png)
+![image](./img/n2.png)
 
 
 ### Confusion Matrix
 
-![image](./img/3.png)
+![image](./img/n3.png)
 
 
 ### New Sample Data Prediction
 
 #### OUTPUT:
 
-![](./img/4.png)
+![](./img/n4.png)
 
 ## RESULT
 Thus, a convolutional deep neural network for digit classification and to verify the response for scanned handwritten images is written and executed successfully.
